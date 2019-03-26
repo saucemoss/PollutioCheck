@@ -13,10 +13,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class fetchData extends AsyncTask<Void,Void,Void> {
     String data = "";
     String dataParsed = "";
+    ArrayList<Integer> ids = new ArrayList<Integer>();
+    ArrayList<Double> zz = new ArrayList<Double>();
+
+
 
     @Override
     protected Void doInBackground(Void... voids) {
@@ -30,13 +36,38 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
                 line = bufferedReader.readLine();
                 data = data + line;
             }
-
+            Double[] lat = new Double[2000];
+            Double[] lon = new Double[2000];
             JSONArray JA = new JSONArray(data);
             for(int i = 0; i < JA.length(); i++){
-                String id = JA.getJSONObject(i).getString("id");
+                Integer id = JA.getJSONObject(i).getInt("id");
                 String stationName = JA.getJSONObject(i).getString("stationName");
-                String gegrLat = JA.getJSONObject(i).getString("gegrLat");
-                String gegrLon = JA.getJSONObject(i).getString("gegrLon");
+                Double gegrLat = JA.getJSONObject(i).getDouble("gegrLat");
+                Double gegrLon = JA.getJSONObject(i).getDouble("gegrLon");
+
+                ids.add(i, id);
+                lat[i]=gegrLat;
+                lon[i]=gegrLon;
+
+                double x1 = MainActivity.latitude;
+                double y1 = MainActivity.longitude;
+                double x3 = 0;
+                double y3 = 0;
+                double x4 = 0;
+                double y4 = 0;
+
+                x3 = (x1 + lat[i])/2;
+                y3 = (y1 + lon[i])/2;
+
+                x4=x1-x3;
+                y4=y1-y3;
+
+                if(x4 < 0) x4 = x4 * -1;
+                if(y4 < 0) y4 = y4 * -1;
+                double z = x4 + y4;
+
+                zz.add(i, z);
+
 
                 dataParsed = dataParsed +
                                         "Station No: " +
@@ -48,6 +79,22 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
 
             }
 
+            int minIndex = zz.indexOf(Collections.min(zz));
+            dataParsed = dataParsed + "\n" + "Nearest station, id: " + ids.get(minIndex);
+
+            for(int i = 0; i < JA.length(); i++) {
+                Integer id = JA.getJSONObject(i).getInt("id");
+                String stationName = JA.getJSONObject(i).getString("stationName");
+                if(ids.get(minIndex) == JA.getJSONObject(i).getInt("id")){
+                    dataParsed = dataParsed +  ", Name: " + stationName;
+                }
+
+
+            }
+
+
+
+
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -56,7 +103,6 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
             e.printStackTrace();
         }
         return null;
-
     }
     @Override
     protected void onPostExecute(Void aVoid) {
