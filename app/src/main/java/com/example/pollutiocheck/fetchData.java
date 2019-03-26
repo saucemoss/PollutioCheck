@@ -2,6 +2,10 @@ package com.example.pollutiocheck;
 
 import android.os.AsyncTask;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +16,7 @@ import java.net.URL;
 
 public class fetchData extends AsyncTask<Void,Void,Void> {
     String data = "";
+    String dataParsed = "";
 
     @Override
     protected Void doInBackground(Void... voids) {
@@ -26,9 +31,28 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
                 data = data + line;
             }
 
+            JSONArray JA = new JSONArray(data);
+            for(int i = 0; i < JA.length(); i++){
+                String id = JA.getJSONObject(i).getString("id");
+                String stationName = JA.getJSONObject(i).getString("stationName");
+                String gegrLat = JA.getJSONObject(i).getString("gegrLat");
+                String gegrLon = JA.getJSONObject(i).getString("gegrLon");
+
+                dataParsed = dataParsed +
+                                        "Station No: " +
+                                        id + "\n" +
+                                        "Station name: " +
+                                        stationName + "\n" +
+                                        "Latitude, Longitude: " +
+                                        gegrLat + ", " + gegrLon + "\n" + "\n";
+
+            }
+
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
             e.printStackTrace();
         }
         return null;
@@ -37,6 +61,6 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        MainActivity.data.setText(data);
+        MainActivity.data.setText(dataParsed);
     }
 }
