@@ -1,5 +1,6 @@
 package com.example.pollutiocheck;
 
+import android.graphics.Color;
 import android.os.AsyncTask;
 
 import org.json.JSONArray;
@@ -101,20 +102,15 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
                 stationData += line;
             }
 
-
             JSONObject obj = new JSONObject(stationData);
             String stCalcDate = obj.getString("stCalcDate");
-            String stIndexLevel = obj.getJSONObject("stIndexLevel").getString("indexLevelName");
-            String so2IndexLevel = obj.getJSONObject("so2IndexLevel").getString("indexLevelName");
-            String no2IndexLevel = obj.getJSONObject("no2IndexLevel").getString("indexLevelName");
-            String pm10IndexLevel = obj.getJSONObject("pm10IndexLevel").getString("indexLevelName");
-            String pm25IndexLevel = obj.getString("pm25IndexLevel");
-            dataParsed += "Ostatnia data pomiaru: " + stCalcDate +
-                            " \n Air pollution index: " + stIndexLevel +
-                            " \n Sulphur dioxide index: " + so2IndexLevel +
-                            " \n Nitrogen dioxide index: " + no2IndexLevel +
-                            " \n PM10 index: " + pm10IndexLevel +
-                            " \n PM25 index: " + pm25IndexLevel;
+            dataParsed += "Data collection date: " + stCalcDate;
+            String[] indexList = {"stIndexLevel","so2IndexLevel","no2IndexLevel","pm10IndexLevel","pm25IndexLevel", "o3IndexLevel", "c6h6IndexLevel" };
+            String[] paramsList = {"\nAir pollution index: ","\nSulphur dioxide index: ","\nNitrogen dioxide index: ","\nPM10 index: ","\nPM25 index: ","\nOzone index: ","\nBenzene index: "};
+            for(int i = 0; i < indexList.length; i++){
+
+                dataParsed += paramsList[i] + checkForNull(obj, indexList[i]);
+            }
 
 
         } catch (MalformedURLException e) {
@@ -122,14 +118,25 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
-            dataParsed += "JSON excepiton";
-            e.printStackTrace();
+            dataParsed += e;
         }
+    }
+
+    String checkForNull(JSONObject obj, String name) throws JSONException {
+        if(!obj.getString(name).equals("null")) {
+            name = obj.getJSONObject(name).getString("indexLevelName");
+            return name;
+        } else {
+            name = "No data available";
+            return name;
+        }
+
     }
 
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
         MainActivity.data.setText(dataParsed);
+
     }
 }
