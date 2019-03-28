@@ -67,17 +67,31 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
             }
 
             int minIndex = offsetScore.indexOf(Collections.min(offsetScore));
-            dataParsed = dataParsed + "\n" + "Nearest station id: " + ids.get(minIndex);
-
+            dataParsed = dataParsed + "Nearest station id: " + ids.get(minIndex);
             for(int i = 0; i < JA.length(); i++) {
                 Integer id = JA.getJSONObject(i).getInt("id");
                 String stationName = JA.getJSONObject(i).getString("stationName");
                 if(ids.get(minIndex) == JA.getJSONObject(i).getInt("id")){
-                    dataParsed +=  ", Name: " + stationName + "\n";
+                    dataParsed +=  ", Name: " + stationName;
                 }
             }
 
             getPollutionInfo(ids.get(minIndex));
+
+            ArrayList<Double>offsetScoreSorted = new ArrayList<>(offsetScore);
+            Collections.sort(offsetScoreSorted);
+
+            for(int i = 1; i < 20; i++) {
+                Double ni = offsetScoreSorted.get(i);
+                for(int j = 0; j < offsetScoreSorted.size(); j++) {
+                    if (ni == offsetScore.get(j)){
+                        int id = offsetScore.indexOf(ni);
+                        dataParsed += "\n\nNext closest station: " + checkForName(JA, id);
+                    }
+                }
+                getPollutionInfo(ids.indexOf(offsetScore) +i + ids.indexOf(offsetScore));
+            }
+
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -85,6 +99,7 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
             e.printStackTrace();
         } catch (JSONException e) {
             e.printStackTrace();
+            dataParsed += e;
         }
         return null;
     }
@@ -104,7 +119,7 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
 
             JSONObject obj = new JSONObject(stationData);
             String stCalcDate = obj.getString("stCalcDate");
-            dataParsed += "Data collection date: " + stCalcDate;
+            dataParsed += "\nData collection date: " + stCalcDate;
             String[] indexList = {"stIndexLevel","so2IndexLevel","no2IndexLevel","pm10IndexLevel","pm25IndexLevel", "o3IndexLevel", "c6h6IndexLevel" };
             String[] paramsList = {"\nAir pollution index: ","\nSulphur dioxide index: ","\nNitrogen dioxide index: ","\nPM10 index: ","\nPM25 index: ","\nOzone index: ","\nBenzene index: "};
             for(int i = 0; i < indexList.length; i++){
@@ -129,6 +144,18 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
         } else {
             name = "No data available";
             return name;
+        }
+
+    }
+
+    String checkForName(JSONArray arr, int i) throws JSONException {
+        dataParsed += arr.getJSONObject(i).getString("stationName");
+        if(!arr.getJSONObject(i).getString("stationName").equals("null")) {
+            String stationName = arr.getJSONObject(i).getString("stationName");
+            return stationName;
+        } else {
+            String stationName = "No data available";
+            return stationName;
         }
 
     }
