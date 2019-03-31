@@ -13,11 +13,14 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.text.method.ScrollingMovementMethod;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     Button click;
@@ -27,18 +30,26 @@ public class MainActivity extends AppCompatActivity {
     static double longitude = 1;
     static double latitude = 1;
 
+    // test coordinates
+    //    static double longitude = 18.638306;
+    //    static double latitude = 54.372158;
+
+    private RecyclerView mRecyclerView;
+    private static RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+    static ArrayList<StationItems> stationList = new ArrayList<>();
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         setContentView(R.layout.activity_main);
         click = findViewById(R.id.button);
-        data = findViewById(R.id.fetcheddata);
-        data.setMovementMethod(new ScrollingMovementMethod());
 
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
+        buildRecyclerView();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -48,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
         click.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("MissingPermission")
             @Override
@@ -56,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Getting location...", Toast.LENGTH_SHORT).show();
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
                     if(longitude == 1 && latitude ==1){
-                        data.setText("Waiting for location...");
+
                     }else{
                         Toast.makeText(getApplicationContext(), "Loading data...", Toast.LENGTH_SHORT).show();
                         fetchData process = new fetchData();
@@ -67,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
     @SuppressLint("MissingPermission")
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
@@ -74,24 +85,38 @@ public class MainActivity extends AppCompatActivity {
             case 10:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(getApplicationContext(), "Getting location...", Toast.LENGTH_SHORT).show();
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 1000, locationListener);
                     if(longitude == 1 && latitude ==1) {
-                        data.setText("Waiting for location...");
+
 
                     }else {
-                    Toast.makeText(getApplicationContext(), "Loading data...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Loading data...", Toast.LENGTH_LONG).show();
                     fetchData process = new fetchData();
                     process.execute();
                 }
                 }else{
-                    data.setText("Permission to user location is not granted. Local air pollution data can not be displayed.");
+
                 }
                 return;
 
         }
+    }
 
+    public void buildRecyclerView() {
+
+        mRecyclerView = findViewById(R.id.recyclerview);
+        mRecyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(this);
+        mAdapter = new Adapter(stationList);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.setAdapter(mAdapter);
 
     }
+
+    public static void listUpdate(){
+        mAdapter.notifyDataSetChanged();
+    }
+
     private LocationListener locationListener = new LocationListener() {
 
         @Override
@@ -101,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Loading data...", Toast.LENGTH_SHORT).show();
             fetchData process = new fetchData();
             process.execute();
+
         }
 
         @Override

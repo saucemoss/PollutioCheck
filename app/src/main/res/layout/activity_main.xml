@@ -4,30 +4,30 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    >
 
     <Button
         android:id="@+id/button"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Get pollution reading" />
+        android:layout_alignBottom="@id/recyclerview"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="0dp"
+        android:background="@android:color/background_dark"
+        android:padding="4dp"
+        android:text="Pollution Check"
+        android:textColor="@android:color/white" />
 
-    <ScrollView
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/button"
-        android:scrollbars = "vertical">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="5dp"
-            android:hint="Pollution Data"
-            android:id="@+id/fetcheddata"
-            android:gravity="bottom"
-            android:layout_weight="1.0"
-            android:scrollbars = "vertical"
-            />
+        android:background="@android:color/black"
+        android:padding="5dp"
+        android:scrollbars="vertical"
 
-    </ScrollView>
+        />
 
 </RelativeLayout>

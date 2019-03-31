@@ -1,7 +1,7 @@
 package com.example.pollutiocheck;
 
-import android.graphics.Color;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,11 +18,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class fetchData extends AsyncTask<Void,Void,Void> {
-    String data = "";
-    String dataParsed = "";
-    ArrayList<Integer> ids = new ArrayList<Integer>();
-    ArrayList<Double> offsetScore = new ArrayList<Double>();
-    Integer id = 0;
+    private String data = "";
+    private ArrayList<Integer> ids = new ArrayList<Integer>();
+    private ArrayList<Double> offsetScore = new ArrayList<Double>();
+    private Integer id = 0;
+
 
     @Override
     protected Void doInBackground(Void... voids) {
@@ -43,21 +43,6 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
 
             //set up variable for json array based on input from http
             JSONArray JA = new JSONArray(data);
-
-            // get the lowest offsets score location in offset score array and store it as minIndex.
-            //int minIndex = offsetScore.indexOf(Collections.min(offsetScore));
-
-            // get and printout ID from "ids" array based on location of lowest score in offset score array.
-            // dataParsed = dataParsed + "Nearest station id: " + ids.get(minIndex);
-
-            // printout the nearest station name
-            // dataParsed += checkForName(JA, ids.get(minIndex));
-
-            // printout pollution of nearest station
-            //getPollutionInfo(ids.get(minIndex));
-
-            // get 10 station ids nearest to user
-            //
             getPollutionInfoList(JA, 10);
 
 
@@ -67,66 +52,77 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
             e.printStackTrace();
         } catch (JSONException e) {
             e.printStackTrace();
-            dataParsed += e;
         }
         return null;
     }
 
+
+    // A method for displaying a list of stations nearest to user location
+    private void getPollutionInfoList(JSONArray JA, int iterations) throws JSONException {
+
+        // first calculate new offset score array
+        getStationsOffsetScore(JA);
+
+
+
+        int i = 0;
+        while(i != iterations){
+
+            // in list of ids, get index position of minimum value from offset score list
+            id = ids.get(offsetScore.indexOf(Collections.min(offsetScore)));
+
+            // add to station list station info based on id
+            MainActivity.stationList.add(new StationItems(R.drawable.ic_launcher_foreground, checkForName(JA, id), getPollutionInfo(id)));
+            Log.d(checkForName(JA, id), getPollutionInfo(id));
+            // remove previous minimum value from offset score and ids list for the next iteration
+            offsetScore.remove(offsetScore.indexOf(Collections.min(offsetScore)));
+            ids.remove(id);
+
+            i++;
+
+        }
+
+    }
+
+    // A method for calculating offset scoring system between user location and stations.
+    // The closer the offset score of a station is to 0, the closer it is to user location.
     private void getStationsOffsetScore(JSONArray JA) throws JSONException {
-        //set up arrays for each coordinates
+
+        // Set up arrays for each coordinates
         Double[] lat = new Double[500];
         Double[] lon = new Double[500];
 
-        //iterate json array for coordinates data and ID of each polution reading station
+        // Iterate json array for coordinates and IDs of each station
         for(int i = 0; i < JA.length(); i++){
-            // get the id and add it to array list "ids"
+
+            // Get the id and add it to array list "ids"
             id = JA.getJSONObject(i).getInt("id");
             ids.add(i, id);
 
-            //get coordinates and add them to arrays
-            Double gegrLat = JA.getJSONObject(i).getDouble("gegrLat");
-            Double gegrLon = JA.getJSONObject(i).getDouble("gegrLon");
-            lat[i]=gegrLat;
-            lon[i]=gegrLon;
+            // subtract coordinates of each station from user current location coordinates and store them as "offsetPoints"
+            double offsetPointsLat = MainActivity.latitude - JA.getJSONObject(i).getDouble("gegrLat");
+            double offsetPointsLong = MainActivity.longitude - JA.getJSONObject(i).getDouble("gegrLon");
 
-            // subtract coordinates of each station from user current location cooridnates and store them as "offsetPoints"
-            double offsetPointsLat = MainActivity.latitude - lat[i];
-            double offsetPointsLong = MainActivity.longitude - lon[i];
-
-            //  revers sign (-) if offset points are lower than 0
+            //  revers sign (-) if offset points are lower than 0, so the score will be always a positive double
             if(offsetPointsLong < 0) offsetPointsLong = offsetPointsLong * -1;
             if(offsetPointsLat < 0) offsetPointsLat = offsetPointsLat * -1;
 
             // add offset points of latitude and longitude to make up an final score for each station.
-            // The lower the offset score is, the closer a station is to user location
             offsetScore.add(i, (offsetPointsLong + offsetPointsLat));
         }
     }
 
-    private void getPollutionInfoList(JSONArray JA, int iterations) throws JSONException {
-        getStationsOffsetScore(JA);
-        int i = 0;
-        while(i != iterations) {
-            // in list of ids, get index position of minimum value from offset score list
-            id = ids.get(offsetScore.indexOf(Collections.min(offsetScore)));
-            dataParsed += "Next closest station id " + id + ", " + checkForName(JA, id);
 
-            getPollutionInfo(id);
-
-            //remove previous id from ids list and minimum value from offset score list for next iteration
-            ids.remove(id);
-            offsetScore.remove(offsetScore.indexOf(Collections.min(offsetScore)));
-
-            dataParsed += "\n\n";
-            i++;
-        }
-    }
-
-    void getPollutionInfo(int id){
-
+    // A method that will return a string with pollution indexes based on station id
+    static String getPollutionInfo(int id){
+        String collectedInfo = "";
         try {
+
+            // new URL setup for API request with desired id number of a station
             URL urlStation = new URL("http://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/" + id);
             HttpURLConnection httpURLConnection = (HttpURLConnection) urlStation.openConnection();
+
+            // parsing all the data to string stationData
             InputStream inputStream = httpURLConnection.getInputStream();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             String line = "";
@@ -136,15 +132,23 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
                 stationData += line;
                 }
 
+            // get JSONobject from stationData string
             JSONObject obj = new JSONObject(stationData);
 
+            // look for date/time of pollution reading
             String stCalcDate = obj.getString("stCalcDate");
-            dataParsed += "\nData collection date: " + stCalcDate;
+
+            // add it to string
+            collectedInfo += "Data collection time: " + stCalcDate;
+
+            // create two string arrays data for parsing
             String[] indexList = {"stIndexLevel","so2IndexLevel","no2IndexLevel","pm10IndexLevel","pm25IndexLevel", "o3IndexLevel", "c6h6IndexLevel" };
             String[] paramsList = {"\nAir pollution index: ","\nSulphur dioxide index: ","\nNitrogen dioxide index: ","\nPM10 index: ","\nPM25 index: ","\nOzone index: ","\nBenzene index: "};
+
             for(int i = 0; i < indexList.length; i++){
 
-                dataParsed += paramsList[i] + checkForNull(obj, indexList[i]);
+                //add the pollution indexes to final string
+                collectedInfo += paramsList[i] + checkForNull(obj, indexList[i]);
             }
 
         } catch (MalformedURLException e) {
@@ -152,11 +156,13 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
-            dataParsed += e;
+            e.printStackTrace();
         }
+        return collectedInfo;
     }
 
-    String checkForNull(JSONObject obj, String name) throws JSONException {
+    // A method for checking if the data exists for pollution index (string name)
+    static String checkForNull(JSONObject obj, String name) throws JSONException {
         if(!obj.getString(name).equals("null")) {
             name = obj.getJSONObject(name).getString("indexLevelName");
             return name;
@@ -166,17 +172,15 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
         }
     }
 
-    String checkForName(JSONArray arr, int id) throws JSONException {
+    // A method that will return string with the name of the station based on id
+    static String checkForName(JSONArray arr, int id) throws JSONException {
         String stationName = "";
         for (int i = 0; i < arr.length(); i++) {
             if (arr.getJSONObject(i).getInt("id") == id) {
-
                 if (!arr.getJSONObject(i).getString("stationName").equals("null")) {
                     stationName = arr.getJSONObject(i).getString("stationName");
-
                 } else {
                     stationName = "No data available";
-
                 }
             }
         }
@@ -186,7 +190,7 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        MainActivity.data.setText(dataParsed);
+        MainActivity.listUpdate();
 
     }
 }
