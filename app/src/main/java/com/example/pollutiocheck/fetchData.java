@@ -1,6 +1,8 @@
 package com.example.pollutiocheck;
 
 import android.os.AsyncTask;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -18,11 +20,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class fetchData extends AsyncTask<Void,Void,Void> {
-    private String data = "";
-    private ArrayList<Integer> ids = new ArrayList<Integer>();
-    private ArrayList<Double> offsetScore = new ArrayList<Double>();
-    private Integer id = 0;
-
+    public String data = "";
+    public static ArrayList<Integer> ids = new ArrayList<Integer>();
+    public static ArrayList<Double> offsetScore = new ArrayList<Double>();
+    public static Integer id = 0;
+    public static JSONArray JA;
+    public static RecyclerView mRecyclerView;
+    public static RecyclerView.Adapter mAdapter;
+    public static RecyclerView.LayoutManager mLayoutManager;
+    static ArrayList<StationItems> stationList = new ArrayList<>();
 
     @Override
     protected Void doInBackground(Void... voids) {
@@ -42,8 +48,9 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
             }
 
             //set up variable for json array based on input from http
-            JSONArray JA = new JSONArray(data);
-            getPollutionInfoList(JA, 10);
+            JA = new JSONArray(data);
+            getPollutionInfoList(JA);
+
 
 
         } catch (MalformedURLException e) {
@@ -58,35 +65,51 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
 
 
     // A method for displaying a list of stations nearest to user location
-    private void getPollutionInfoList(JSONArray JA, int iterations) throws JSONException {
+    public static void getPollutionInfoList(JSONArray JA) throws JSONException {
 
         // first calculate new offset score array
         getStationsOffsetScore(JA);
 
+        if(stationList.size() == 0) {
+            for(int i = 0; i < JA.length(); i++){
 
+                // in list of ids, get index position of minimum value from offset score list
+                id = ids.get(offsetScore.indexOf(Collections.min(offsetScore)));
 
-        int i = 0;
-        while(i != iterations){
+                // add to station list station info based on id
+                stationList.add(new StationItems(R.drawable.ic_launcher_foreground, checkForName(JA, id), getPollutionInfo(id)));
 
-            // in list of ids, get index position of minimum value from offset score list
-            id = ids.get(offsetScore.indexOf(Collections.min(offsetScore)));
+                // remove previous minimum value from offset score and ids list for the next iteration
+                offsetScore.remove(offsetScore.indexOf(Collections.min(offsetScore)));
+                ids.remove(id);
 
-            // add to station list station info based on id
-            MainActivity.stationList.add(new StationItems(R.drawable.ic_launcher_foreground, checkForName(JA, id), getPollutionInfo(id)));
-            Log.d(checkForName(JA, id), getPollutionInfo(id));
-            // remove previous minimum value from offset score and ids list for the next iteration
-            offsetScore.remove(offsetScore.indexOf(Collections.min(offsetScore)));
-            ids.remove(id);
+                if(i < 5)listUpdate(id, JA.length());
+                if(i % 10 == 0)listUpdate(id, JA.length());
 
-            i++;
+                }
+        }else{
+            listRefresh();
 
         }
+    }
+
+
+    public static void listUpdate(int i, int size){
+        try {
+        mAdapter.notifyItemRangeInserted(i,  size);
+        } catch (Exception e) {
+            Log.d("error", e.toString());
+        }
+    }
+
+    public static void listRefresh() {
+        mAdapter = new Adapter(stationList);
 
     }
 
     // A method for calculating offset scoring system between user location and stations.
     // The closer the offset score of a station is to 0, the closer it is to user location.
-    private void getStationsOffsetScore(JSONArray JA) throws JSONException {
+    public static void getStationsOffsetScore(JSONArray JA) throws JSONException {
 
         // Set up arrays for each coordinates
         Double[] lat = new Double[500];
@@ -190,7 +213,7 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        MainActivity.listUpdate();
-
+        mAdapter.notifyDataSetChanged();
     }
+
 }

@@ -16,6 +16,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
         public ImageView mImageView;
         public TextView mTextView1;
         public TextView mTextView2;
+        public View mColorCode;
 
 
         public ViewHolder(View itemView) {
@@ -23,11 +24,15 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             mImageView = itemView.findViewById(R.id.imageView);
             mTextView1 = itemView.findViewById(R.id.textView1);
             mTextView2 = itemView.findViewById(R.id.textView2);
+            mColorCode = itemView.findViewById(R.id.itemBackground);
         }
     }
 
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
+
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item, parent, false);
         ViewHolder evh = new ViewHolder(v);
         return evh;
@@ -44,10 +49,19 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
         holder.mImageView.setImageResource(currentItem.getImageResource());
         holder.mTextView1.setText(currentItem.getText1());
         holder.mTextView2.setText(currentItem.getText2());
+        holder.mColorCode.setBackgroundColor(currentItem.getColorCode(currentItem.getText2()));
+
     }
 
     @Override
     public int getItemCount() {
         return sl.size();
     }
+
+    public interface onStationListener{
+        void onStationClick(int  position);
+    }
+
+
 }
+

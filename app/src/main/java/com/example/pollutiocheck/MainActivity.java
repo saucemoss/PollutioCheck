@@ -20,24 +20,25 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
+import java.util.Collections;
+
+import static com.example.pollutiocheck.fetchData.ids;
 
 public class MainActivity extends AppCompatActivity {
-    Button click;
-    Button locationButton;
-    public static TextView data;
+    Button getPollutionButton;
     private LocationManager locationManager;
+
+
     static double longitude = 1;
     static double latitude = 1;
 
     // test coordinates
     //    static double longitude = 18.638306;
     //    static double latitude = 54.372158;
-
-    private RecyclerView mRecyclerView;
-    private static RecyclerView.Adapter mAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
-    static ArrayList<StationItems> stationList = new ArrayList<>();
 
 
 
@@ -47,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         setContentView(R.layout.activity_main);
-        click = findViewById(R.id.button);
+        getPollutionButton = findViewById(R.id.button);
 
         buildRecyclerView();
 
@@ -59,12 +60,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        click.setOnClickListener(new View.OnClickListener() {
+
+
+        getPollutionButton.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
                 Toast.makeText(getApplicationContext(), "Getting location...", Toast.LENGTH_SHORT).show();
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1000, locationListener);
                     if(longitude == 1 && latitude ==1){
 
                     }else{
@@ -72,10 +75,24 @@ public class MainActivity extends AppCompatActivity {
                         fetchData process = new fetchData();
                         process.execute();
 
+
                 }
             }
         });
     }
+
+    public void buildRecyclerView() {
+
+        fetchData.mRecyclerView = findViewById(R.id.recyclerview);
+        fetchData.mRecyclerView.setHasFixedSize(true);
+        fetchData.mLayoutManager = new LinearLayoutManager(this);
+        fetchData.mAdapter = new Adapter(fetchData.stationList);
+        fetchData.mRecyclerView.setLayoutManager(fetchData.mLayoutManager);
+        fetchData.mRecyclerView.setAdapter(fetchData.mAdapter);
+
+    }
+
+
 
 
     @SuppressLint("MissingPermission")
@@ -85,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
             case 10:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(getApplicationContext(), "Getting location...", Toast.LENGTH_SHORT).show();
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 1000, locationListener);
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1000, locationListener);
                     if(longitude == 1 && latitude ==1) {
 
 
@@ -93,7 +110,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Loading data...", Toast.LENGTH_LONG).show();
                     fetchData process = new fetchData();
                     process.execute();
-                }
+
+                    }
                 }else{
 
                 }
@@ -102,20 +120,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void buildRecyclerView() {
-
-        mRecyclerView = findViewById(R.id.recyclerview);
-        mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(this);
-        mAdapter = new Adapter(stationList);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setAdapter(mAdapter);
-
-    }
-
-    public static void listUpdate(){
-        mAdapter.notifyDataSetChanged();
-    }
 
     private LocationListener locationListener = new LocationListener() {
 
