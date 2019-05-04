@@ -1,9 +1,10 @@
-package com.example.pollutiocheck;
+package com.pollutiocheck;
 
 import android.os.AsyncTask;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+
+import com.example.pollutiocheck.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,7 +29,7 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
     public static RecyclerView mRecyclerView;
     public static RecyclerView.Adapter mAdapter;
     public static RecyclerView.LayoutManager mLayoutManager;
-    static ArrayList<StationItems> stationList = new ArrayList<>();
+    static ArrayList<StationItem> stationList = new ArrayList<>();
 
     @Override
     protected Void doInBackground(Void... voids) {
@@ -77,7 +78,7 @@ public class fetchData extends AsyncTask<Void,Void,Void> {
                 id = ids.get(offsetScore.indexOf(Collections.min(offsetScore)));
 
                 // add to station list station info based on id
-                stationList.add(new StationItems(R.drawable.ic_launcher_foreground, checkForName(JA, id), getPollutionInfo(id)));
+                stationList.add(new StationItem(R.drawable.ic_launcher_foreground, checkForName(JA, id), getPollutionInfo(id)));
 
                 // remove previous minimum value from offset score and ids list for the next iteration
                 offsetScore.remove(offsetScore.indexOf(Collections.min(offsetScore)));

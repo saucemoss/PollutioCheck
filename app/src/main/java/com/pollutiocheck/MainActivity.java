@@ -1,4 +1,4 @@
-package com.example.pollutiocheck;
+package com.pollutiocheck;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -14,19 +14,11 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import java.util.ArrayList;
-import java.util.Collections;
-
-import static com.example.pollutiocheck.fetchData.ids;
+import com.example.pollutiocheck.R;
 
 public class MainActivity extends AppCompatActivity {
     Button getPollutionButton;
@@ -50,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getPollutionButton = findViewById(R.id.button);
 
+
         buildRecyclerView();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -61,20 +54,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
         getPollutionButton.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
                 Toast.makeText(getApplicationContext(), "Getting location...", Toast.LENGTH_SHORT).show();
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1000, locationListener);
-                    if(longitude == 1 && latitude ==1){
-
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 15000, 1000, locationListener);
+                    if(longitude == 1 && latitude ==1){ locationManager.getLastKnownLocation("GPS_PROVIDER");
                     }else{
                         Toast.makeText(getApplicationContext(), "Loading data...", Toast.LENGTH_SHORT).show();
                         fetchData process = new fetchData();
                         process.execute();
-
 
                 }
             }
@@ -93,7 +83,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
+    public void goToActivity2(View view){
+        Intent intent = new Intent (this, StationDetailsActivity.class);
+        startActivity(intent);
+    }
 
     @SuppressLint("MissingPermission")
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -104,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Getting location...", Toast.LENGTH_SHORT).show();
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1000, locationListener);
                     if(longitude == 1 && latitude ==1) {
-
+                        locationManager.getLastKnownLocation("GPS_PROVIDER");
 
                     }else {
                     Toast.makeText(getApplicationContext(), "Loading data...", Toast.LENGTH_LONG).show();
@@ -149,4 +142,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         }
     };
+
+
 }
