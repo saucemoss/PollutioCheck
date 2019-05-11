@@ -14,14 +14,14 @@
         android:hardwareAccelerated="false"
 
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name="com.pollutiocheck.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".StationDetailsActivity" />
+        <activity android:name="com.pollutiocheck.StationDetailsActivity" />
     </application>
 
 </manifest>
